@@ -1,0 +1,90 @@
+function shuffle () { // allows agent to move
+    tempArray = [forward, left, right]
+    for (let index3 = 0; index3 < 3; index3++) {
+        index = Math.randomRange(0, 2)
+        index2 = Math.randomRange(0, 2)
+        temp = tempArray[index]
+        tempArray[index] = tempArray[index2]
+        tempArray[index2] = temp
+    }
+    for (let k = 0; k <= 3 - 1; k++) {
+        dirs.push(tempArray[k])
+    }
+}
+player.onChat("maze", function () {       // chat message "maze" activates the agent 
+    blocks.fill(
+    STONE,                             // fills area with stone 
+    positions.create(-5, 0, -5),
+    positions.create(5, 0, 5),
+    FillOperation.Replace
+    )
+    agent.teleportToPlayer()      // teleports agent to player 
+    blocks.place(AIR, positions.create(0, 0, 0)) // replaces front block with air
+    agent.setAssist(DESTROY_OBSTACLES, false)
+    player.teleport(positions.create(0, 5, 0))
+    player.say("let's dig that maze!")  // player says this in chat
+    dig()  // will call function "dig" 
+})
+function dig () { // allows agent to destroy blocks 
+    player.say("dig deeper")
+    shuffle() // calls function shuffle
+    for (let index3 = 0; index3 < 3; index3++) {
+        player.say("try " + moves[dirs[dirs.length - 1]])
+        // turn towards the new direction
+        if (dirs[dirs.length - 1] == left) {
+            agent.turn(LEFT_TURN) 
+        } else if (dirs[dirs.length - 1] == right) {
+            agent.turn(RIGHT_TURN)
+        }
+        // is this a wall?
+        if (agent.detect(AgentDetection.Block, FORWARD)) {
+            // dig once
+            agent.destroy(FORWARD)
+            agent.move(FORWARD, 1)
+            // did we dig through a wall?
+            if (!(agent.detect(AgentDetection.Block, FORWARD))) {
+                player.say("oops, that was a wall")
+                // move back and put the wall back
+                agent.move(BACK, 1)
+                agent.place(FORWARD)
+            } else {
+                // yay! keep digging
+                agent.destroy(FORWARD)
+                agent.move(FORWARD, 1)
+                // did we reach the end of the maze?
+                if (!(agent.detect(AgentDetection.Block, FORWARD))) {
+                    // go back and place wall
+                    player.say("oops, too far")
+                    agent.move(BACK, 1)
+                    agent.place(FORWARD)
+                    agent.move(BACK, 1)
+                } else {
+                    dig()
+                    // start roll back
+                    agent.move(BACK, 2)
+                }
+            }
+        }
+        // turn back to the original direction
+        if (dirs[dirs.length - 1] == left) {
+            agent.turn(RIGHT_TURN)
+        } else if (dirs[dirs.length - 1] == right) {
+            agent.turn(LEFT_TURN)
+        }
+        temp = dirs.pop()
+    }
+}
+let dirs: number[] = []
+let index2 = 0
+let index = 0
+let tempArray: number[] = []
+let right = 0
+let left = 0
+let forward = 0
+let temp = 0
+let moves: string[] = []
+moves = ["forward", "left", "right"]
+temp = 1
+forward = 0
+left = 1
+right = 2
